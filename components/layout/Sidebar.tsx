@@ -15,12 +15,14 @@ import {
   X,
   Heart,
   Sparkles,
+  Users,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 const NAV = [
   { href: '/', label: 'Tổng quan', icon: House, emoji: '🏠' },
   { href: '/transactions', label: 'Thu chi', icon: ClipboardList, emoji: '📝' },
+  { href: '/family', label: 'Thành viên', icon: Users, emoji: '👨‍👩‍👧' },
   { href: '/budgets', label: 'Ngân sách', icon: CalendarCheck, emoji: '📅' },
   { href: '/savings', label: 'Tiết kiệm', icon: PiggyBank, emoji: '🐷' },
   { href: '/loans', label: 'Khoản vay', icon: HandCoins, emoji: '🤝' },
