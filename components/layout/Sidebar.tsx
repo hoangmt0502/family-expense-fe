@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   House,
@@ -9,7 +10,6 @@ import {
   CalendarCheck,
   Settings,
   X,
-  Sparkles,
   Users,
   FolderTree,
   ChevronDown,
@@ -59,6 +59,26 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: SidebarProps) {
   // Trạng thái mở/đóng menu con
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  // Tên gia đình lấy từ thông tin người dùng
+  const [familyName, setFamilyName] = useState<string>('Gia đình nhỏ');
+
+  // Lấy tên gia đình từ localStorage
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user_info');
+    console.log(savedUser)
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        const name = parsed.family?.name || parsed.familyName;
+        if (name) {
+          setFamilyName(name);
+        }
+      } catch (e) {
+        console.error('Lỗi đọc user_info:', e);
+      }
+    }
+  }, []);
+
   // Tự động mở group nếu đang nằm trong đường dẫn con
   useEffect(() => {
     const initialState: Record<string, boolean> = {};
@@ -82,38 +102,47 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: SidebarProps) {
   const SidebarContent = (
     <div className="flex h-full flex-col justify-between p-4 sm:p-5 select-none overflow-y-auto">
       <div>
-        {/* Header Logo Cute */}
+        {/* Header Logo 3D Cute & Tên Gia Đình */}
         <div className="flex items-center justify-between pb-5 pt-1 px-1">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-pink-400 via-purple-400 to-indigo-400 text-white shadow-md shadow-pink-400/30 ring-4 ring-pink-100 dark:ring-white/10 transition-transform hover:scale-105 hover:rotate-3">
-              <House className="h-6 w-6" />
-              <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-amber-300 animate-bounce" />
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Logo 3D 💜 */}
+            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-tr from-pink-100 via-purple-100 to-indigo-100 dark:from-slate-800 dark:to-purple-950 p-1 shadow-sm transition-transform hover:scale-105">
+              <Image
+                src="/images/logo.png"
+                alt="Logo Gia Đình"
+                width={48}
+                height={48}
+                priority
+                className="object-contain"
+              />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <span className="text-base font-extrabold tracking-tight bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  Gia đình nhỏ
+
+            {/* Tên Gia Đình Map Từ user.family */}
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-sm sm:text-base font-extrabold tracking-tight bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 bg-clip-text text-transparent truncate">
+                  {familyName}
                 </span>
-                <span className="text-xs">✨</span>
+                <span className="text-xs shrink-0">✨</span>
               </div>
-              <span className="text-[10px] font-bold text-pink-500/80 dark:text-purple-300 tracking-wider">
+              <span className="text-[10px] font-bold text-pink-500/80 dark:text-purple-300 tracking-wider truncate">
                 Home Sweet Home 💖
               </span>
             </div>
           </div>
 
-          {/* Close button Mobile */}
+          {/* Nút Đóng Sidebar Mobile */}
           {onCloseMobile && (
             <button
               onClick={onCloseMobile}
-              className="grid h-8 w-8 place-items-center rounded-xl bg-pink-50 text-pink-500 hover:bg-pink-100 lg:hidden dark:bg-white/10 dark:text-slate-300"
+              className="grid h-8 w-8 place-items-center rounded-xl bg-pink-50 text-pink-500 hover:bg-pink-100 lg:hidden dark:bg-white/10 dark:text-slate-300 shrink-0"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Menu xinh xắn */}
+        {/* Menu Điều Hướng */}
         <nav className="space-y-1">
           {NAV.map((item) => {
             // 1. DẠNG MENU CÓ CẤP 2 (CHILDREN)
@@ -241,7 +270,7 @@ export default function Sidebar({ isOpenMobile, onCloseMobile }: SidebarProps) {
         </nav>
       </div>
 
-      {/* Footer Nút Toggle Sáng/Tối xịn xò */}
+      {/* Footer Toggle Sáng/Tối */}
       <div className="pt-3 border-t border-pink-100/60 dark:border-white/10 flex flex-col items-center gap-2 shrink-0">
         <ThemeToggle />
         <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">

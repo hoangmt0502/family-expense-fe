@@ -15,11 +15,32 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const checkFamilyStatus = async () => {
       try {
-        // Kiểm tra xem user đã tham gia/tạo Family nào chưa
-        await api.get('/families/current');
+        // 1. Kiểm tra nhanh từ localStorage xem user đã có family chưa
+        const localUser = localStorage.getItem('user_info');
+        if (localUser) {
+          const parsedUser = JSON.parse(localUser);
+          if (parsedUser.hasFamily === false) {
+            router.replace('/onboarding');
+            return;
+          }
+        }
+
+        // 2. Gọi API lấy thông tin hiện tại (ví dụ API trả về user kèm thông tin family)
+        const res = await api.get('/families/current');
+        
+        if (res.data) {
+          // Lấy user cũ trong localStorage ra, cập nhật thêm family vào rồi lưu lại
+          const currentUser = localUser ? JSON.parse(localUser) : {};
+          const updatedUser = {
+            ...currentUser,
+            family: res.data, // Gắn family vào trong user_info
+            hasFamily: true,
+          };
+          localStorage.setItem('user_info', JSON.stringify(updatedUser));
+        }
+
         setLoading(false);
       } catch (err: any) {
-        // Nếu API trả về 404 (chưa có Family) -> Chuyển hướng sang trang Onboarding
         if (err.response?.status === 404) {
           router.replace('/onboarding');
         } else {
