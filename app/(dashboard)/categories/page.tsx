@@ -241,7 +241,7 @@ export default function CategoriesPage() {
         emoji="🏷️"
         description="Quản lý & phân loại khoản thu nhập, chi tiêu cho gia đình 💜"
         bannerDay="/images/banner_category.png"
-        bannerNight="/images/banner_category_dark.png"
+        bannerNight="/images/banner_category_night.png"
         actionSlot={
           <button
             type="button"
