@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import HeroBanner from '@/components/ui/HeroBanner';
 import TransactionDetailModal from '@/components/transactions/TransactionDetailModal';
 import CameraCaptureModal from '@/components/ui/Cameracapturemodal';
+import Dropdown from '@/components/ui/Dropdown';
 import { LUCIDE_ICONS } from '../categories/page';
 
 // Date Picker Library & Locales
@@ -389,52 +390,44 @@ export default function TransactionsPage() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
         <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3">
           {/* Lọc Tháng */}
-          <div className="flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
-            <CalendarIcon className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
-            >
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <option key={m} value={m}>
-                  T{m}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Dropdown
+            className="sm:w-28"
+            title="Chọn tháng"
+            leftIcon={<CalendarIcon className="h-3.5 w-3.5" />}
+            value={String(selectedMonth)}
+            onChange={(v) => setSelectedMonth(Number(v))}
+            options={Array.from({ length: 12 }, (_, i) => ({
+              value: String(i + 1),
+              label: `Tháng ${i + 1}`,
+              shortLabel: `T${i + 1}`,
+            }))}
+          />
 
           {/* Lọc Năm */}
-          <div className="flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
-            >
-              {[2025, 2026, 2027].map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Dropdown
+            className="sm:w-24"
+            title="Chọn năm"
+            value={String(selectedYear)}
+            onChange={(v) => setSelectedYear(Number(v))}
+            options={[2025, 2026, 2027].map((y) => ({ value: String(y), label: String(y) }))}
+          />
 
           {/* Lọc Danh mục */}
-          <div className="flex items-center justify-center gap-1.5 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-2 rounded-xl border border-slate-200/80 dark:border-slate-700">
-            <Filter className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
-            <select
-              value={selectedCategoryId}
-              onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none max-w-[90px] sm:max-w-[150px] truncate cursor-pointer"
-            >
-              <option value="">Tất cả</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Dropdown
+            className="sm:w-48"
+            title="Lọc theo danh mục"
+            leftIcon={<Filter className="h-3.5 w-3.5" />}
+            value={selectedCategoryId}
+            onChange={setSelectedCategoryId}
+            options={[
+              { value: '', label: 'Tất cả danh mục', shortLabel: 'Tất cả' },
+              ...categories.map((c) => ({
+                value: c.id,
+                label: c.name,
+                hint: c.type === 'EXPENSE' ? 'Khoản chi' : 'Thu nhập',
+              })),
+            ]}
+          />
         </div>
 
         <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 text-center sm:text-right">
@@ -720,19 +713,14 @@ export default function TransactionsPage() {
                 <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wider">
                   Danh mục <span className="text-rose-500">*</span>
                 </label>
-                <select
-                  required
+                <Dropdown
+                  variant="field"
+                  title="Chọn danh mục"
+                  placeholder="-- Chọn danh mục --"
                   value={formData.categoryId}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-800/50 dark:text-white"
-                >
-                  <option value="">-- Chọn danh mục --</option>
-                  {filteredCategoriesForForm.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setFormData({ ...formData, categoryId: v })}
+                  options={filteredCategoriesForForm.map((c) => ({ value: c.id, label: c.name }))}
+                />
               </div>
 
               {/* DATE PICKER */}
