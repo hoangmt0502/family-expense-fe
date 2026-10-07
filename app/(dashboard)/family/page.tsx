@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import api from '@/lib/api';
+import HeroBanner from '@/components/ui/HeroBanner';
 import {
   Users,
   Copy,
@@ -13,7 +14,6 @@ import {
   Eye,
   Trash2,
   Loader2,
-  Sparkles,
   LogOut,
   AlertTriangle,
   X,
@@ -140,53 +140,22 @@ export default function FamilyManagementPage() {
   const isHost = currentUserRole === 'HOST' || currentUserRole === 'ADMIN';
 
   return (
-    <div className="w-full space-y-6 pb-12 pt-2 select-none">
+    <div className="w-full space-y-5 pb-16 select-none">
       
-      {/* 1. BANNER TRÀN FULL & RESPONSIVE CHUẨN XÁC */}
-      <div className="relative w-full overflow-hidden rounded-3xl shadow-md border border-slate-100 dark:border-slate-800 bg-slate-900">
-        
-        {/* Ảnh Banner nền */}
-        <div className="relative w-full h-60 sm:h-64 md:h-80">
-          <Image
-            src="/images/banner_member.png"
-            alt="Banner Tôn Vinh Tổ Ấm"
-            fill
-            priority
-            className="object-cover object-center dark:hidden"
-          />
-          <Image
-            src="/images/banner_member_dark.png"
-            alt="Banner Tôn Vinh Tổ Ấm Dark"
-            fill
-            priority
-            className="object-cover object-center hidden dark:block"
-          />
-          {/* Lớp gradient tinh tế giúp chữ đọc cực rõ mà không làm tối hình ảnh */}
-          <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-white/95 via-white/40 to-transparent dark:from-slate-950/95 dark:via-slate-950/40 pointer-events-none" />
-        </div>
-
-        {/* Khung thông tin đè lên banner */}
-        <div className="absolute inset-0 p-5 sm:p-6 md:p-8 flex flex-col justify-between lg:flex-row lg:items-center lg:justify-between gap-4 z-10">
-          
-          <div className="space-y-1.5 drop-shadow-sm max-w-xl">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 text-xs font-semibold text-purple-700 dark:text-purple-300 shadow-sm border border-white/40 dark:border-slate-700">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span>Tổ ấm chung</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight flex items-center gap-2 text-slate-900 dark:text-white">
-              <span className="truncate">{family?.name}</span>
-              <span className="text-pink-500 shrink-0">♡</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 font-medium line-clamp-2 sm:line-clamp-none">
-              Quản lý thành viên, phân quyền và cùng nhau xây dựng những kế hoạch lớn cho tương lai 💜
-            </p>
-          </div>
-
-          {/* Ô Mã Mời kiểu dáng Smart Pill: Gọn gàng, tinh tế, không bao giờ che mèo */}
-          <div className="flex items-center gap-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-slate-700 px-4 py-2.5 sm:px-5 sm:py-3 shadow-xl shrink-0 self-start lg:self-auto">
+      {/* 1. HERO BANNER CHUẨN ĐỒNG BỘ VỚI TRANG TRANSACTIONS */}
+      <HeroBanner
+        badgeText="✨ Tổ ấm chung"
+        greeting="Quản lý thành viên"
+        title={family?.name || 'Gia đình nhỏ'}
+        emoji="🏡"
+        description="Quản lý thành viên, phân quyền và cùng nhau xây dựng những kế hoạch lớn cho tương lai 💜"
+        bannerDay="/images/banner_member.png"
+        bannerNight="/images/banner_member_dark.png"
+        actionSlot={
+          <div className="flex items-center gap-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800 px-4 py-2.5 sm:px-5 sm:py-3 shadow-lg shrink-0">
             <div className="space-y-0.5">
               <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Mã mời
+                Mã mời gia đình
               </p>
               <p className="text-base sm:text-lg font-mono font-black tracking-widest text-purple-600 dark:text-purple-400">
                 {family?.inviteCode}
@@ -206,9 +175,8 @@ export default function FamilyManagementPage() {
               )}
             </button>
           </div>
-
-        </div>
-      </div>
+        }
+      />
 
       {/* 2. DANH SÁCH THÀNH VIÊN */}
       <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -288,7 +256,7 @@ export default function FamilyManagementPage() {
                     <select
                       value={member.role}
                       onChange={(e) => handleRoleChange(member.id, e.target.value)}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
                     >
                       <option value="HOST">Chủ hộ 🏠</option>
                       <option value="MEMBER">Thành viên 👨‍👩‍👧</option>

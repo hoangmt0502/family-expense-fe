@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import api from '@/lib/api';
+import HeroBanner from '@/components/ui/HeroBanner';
 import {
   Plus,
   Pencil,
@@ -14,7 +15,6 @@ import {
   AlertTriangle,
   Upload,
   Check,
-  Sparkles,
   Smile,
   ImageIcon,
   Utensils,
@@ -232,44 +232,27 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="w-full space-y-6 pb-12 pt-2 select-none">
-      {/* 1. BANNER TINH GỌN */}
-      <div className="relative w-full overflow-hidden rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 bg-slate-900">
-        <div className="relative w-full h-36 sm:h-40 md:h-44">
-          <Image
-            src="/images/banner_category.png"
-            alt="Banner Danh Mục Thu Chi"
-            fill
-            priority
-            className="object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/40 to-transparent dark:from-slate-950/90 dark:via-slate-950/40 pointer-events-none" />
-        </div>
-
-        <div className="absolute inset-0 p-4 sm:p-5 md:p-6 flex flex-col justify-between sm:flex-row sm:items-center sm:justify-between gap-3 z-10">
-          <div className="space-y-1 drop-shadow-sm max-w-md">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-2.5 py-0.5 text-[11px] font-semibold text-purple-700 dark:text-purple-300 shadow-xs border border-white/40 dark:border-slate-700">
-              <Sparkles className="h-3 w-3 text-amber-500" />
-              <span>Phân loại thu chi</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              Danh mục tài chính
-            </h1>
-            <p className="text-xs text-slate-700 dark:text-slate-200 font-medium line-clamp-1 sm:line-clamp-none">
-              Quản lý & phân loại khoản thu nhập, chi tiêu cho gia đình 💜
-            </p>
-          </div>
-
+    <div className="w-full space-y-5 pb-16 select-none">
+      {/* 1. HERO BANNER CHUẨN ĐỒNG BỘ */}
+      <HeroBanner
+        badgeText="✨ Phân loại thu chi"
+        greeting="Quản lý danh mục"
+        title="Danh mục tài chính"
+        emoji="🏷️"
+        description="Quản lý & phân loại khoản thu nhập, chi tiêu cho gia đình 💜"
+        bannerDay="/images/banner_category.png"
+        bannerNight="/images/banner_category_dark.png"
+        actionSlot={
           <button
             type="button"
             onClick={handleOpenCreateModal}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 text-xs font-bold shadow-md shadow-purple-600/25 transition-all active:scale-95 shrink-0 self-start sm:self-center"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-pink-500 hover:opacity-95 text-white px-4 py-2.5 sm:px-5 sm:py-3 text-xs sm:text-sm font-extrabold shadow-lg shadow-purple-500/25 transition-all active:scale-95 shrink-0"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 stroke-[3]" />
             <span>Thêm danh mục</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* 2. BỘ LỌC TABS */}
       <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/60 w-fit border border-slate-200/60 dark:border-slate-800">
@@ -678,7 +661,7 @@ export default function CategoriesPage() {
                   className="w-1/2 py-3 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-2 active:scale-95"
                 >
                   {submitLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <span>{editingCategory ? 'Cập nhật' : 'Tạo mới'}</span>
                   )}
