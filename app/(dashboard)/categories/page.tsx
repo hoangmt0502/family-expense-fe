@@ -5,10 +5,10 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import api from '@/lib/api';
 import HeroBanner from '@/components/ui/HeroBanner';
+import type { ComponentType } from 'react';
+import { Lock, Pencil, Trash2 } from 'lucide-react';
 import {
   Plus,
-  Pencil,
-  Trash2,
   Loader2,
   Tag,
   X,
@@ -303,95 +303,23 @@ export default function CategoriesPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredCategories.map((cat) => {
-            const isSystem = !cat.familyId;
-            const firstLetter = cat.name.charAt(0).toUpperCase();
-
-            return (
-              <div
-                key={cat.id}
-                className="group relative flex items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  {/* Khối Ảnh đại diện / Icon Emoji */}
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 text-white font-black text-lg grid place-items-center shadow-sm">
-                    {cat.imageUrl ? (
-                      <Image
-                        src={cat.imageUrl}
-                        alt={cat.name}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : cat.icon ? (
-                      (() => {
-                        const LucideIconItem = LUCIDE_ICONS.find(
-                          (i) => i.name === cat.icon,
-                        )?.Icon;
-                        return LucideIconItem ? (
-                          <LucideIconItem className="h-6 w-6 text-white" />
-                        ) : (
-                          <span className="text-xl">{cat.icon}</span>
-                        );
-                      })()
-                    ) : (
-                      <span>{firstLetter}</span>
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                      {cat.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <span
-                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md ${
-                          cat.type === 'EXPENSE'
-                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                            : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
-                        }`}
-                      >
-                        {cat.type === 'EXPENSE' ? 'Khoản chi' : 'Thu nhập'}
-                      </span>
-
-                      {isSystem && (
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                          Mặc định
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {!isSystem && (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditModal(cat)}
-                      className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-purple-600 dark:hover:bg-slate-800 dark:hover:text-purple-400 transition-colors"
-                      title="Chỉnh sửa"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDeleteModal({
-                          isOpen: true,
-                          categoryId: cat.id,
-                          categoryName: cat.name,
-                        })
-                      }
-                      className="grid h-8 w-8 place-items-center rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition-colors"
-                      title="Xóa"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        // pt-3: chừa chỗ cho chip sửa/xóa vắt trên viền thẻ ở hàng đầu
+        <div className="grid grid-cols-1 gap-x-4 gap-y-5 pt-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {filteredCategories.map((cat) => (
+            <CategoryCard
+              key={cat.id}
+              category={cat}
+              icons={LUCIDE_ICONS}
+              onEdit={() => handleOpenEditModal(cat)}
+              onDelete={() =>
+                setDeleteModal({
+                  isOpen: true,
+                  categoryId: cat.id,
+                  categoryName: cat.name,
+                })
+              }
+            />
+          ))}
         </div>
       )}
 
@@ -732,6 +660,107 @@ export default function CategoriesPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type IconEntry = { name: string; Icon: ComponentType<{ className?: string }> };
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  type: 'INCOME' | 'EXPENSE';
+  icon?: string;
+  imageUrl?: string;
+  familyId?: string | null;
+}
+
+interface Props {
+  category: CategoryItem;
+  icons: IconEntry[]; // truyền LUCIDE_ICONS vào
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function CategoryCard({ category: cat, icons, onEdit, onDelete }: Props) {
+  const isSystem = !cat.familyId;
+  const isExpense = cat.type === 'EXPENSE';
+
+  const Lucide = icons.find((i) => i.name === cat.icon)?.Icon;
+  // icon là tên chữ (vd "Coins") nhưng không khớp → hiện chữ cái đầu; là emoji → hiện emoji
+  const iconIsWord = !cat.icon || /^[A-Za-z]+$/.test(cat.icon);
+
+  return (
+    <div className="group relative flex items-center gap-3.5 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-300/70 hover:shadow-lg hover:shadow-purple-500/10 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-purple-500/40">
+      {/* Icon tile: màu theo thu / chi */}
+      <div
+        className={`relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br text-white shadow-md ${
+          isExpense
+            ? 'from-rose-400 to-pink-500 shadow-rose-500/25'
+            : 'from-emerald-400 to-teal-500 shadow-emerald-500/25'
+        }`}
+      >
+        {cat.imageUrl ? (
+          <Image src={cat.imageUrl} alt={cat.name} fill sizes="56px" className="object-cover" />
+        ) : Lucide ? (
+          <Lucide className="h-7 w-7" />
+        ) : iconIsWord ? (
+          <span className="text-xl font-black">{cat.name.charAt(0).toUpperCase()}</span>
+        ) : (
+          <span className="text-2xl">{cat.icon}</span>
+        )}
+      </div>
+
+      {/* Nội dung: luôn chiếm trọn chỗ, không bị nút thao tác chen vào */}
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white" title={cat.name}>
+          {cat.name}
+        </h3>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+              isExpense
+                ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
+                : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+            }`}
+          >
+            <i className="h-1.5 w-1.5 rounded-full bg-current" />
+            {isExpense ? 'Khoản chi' : 'Thu nhập'}
+          </span>
+
+          {isSystem && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <Lock className="h-2.5 w-2.5" />
+              Mặc định
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Nút thao tác: absolute, nằm đè lên viền trên → không ảnh hưởng layout.
+          Desktop: hiện khi hover/focus. Thiết bị cảm ứng (không hover): luôn hiện. */}
+      {!isSystem && (
+        <div className="absolute -top-3 right-3 flex items-center gap-0.5 rounded-xl border border-slate-200 bg-white p-0.5 opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100 dark:border-slate-700 dark:bg-slate-800">
+          <button
+            type="button"
+            onClick={onEdit}
+            title="Chỉnh sửa"
+            aria-label="Chỉnh sửa"
+            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-500/10 dark:hover:text-purple-400"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Xóa"
+            aria-label="Xóa"
+            className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
     </div>
