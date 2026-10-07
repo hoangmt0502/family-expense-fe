@@ -17,6 +17,7 @@ import {
   Sparkles,
   Heart,
 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,9 +62,15 @@ export default function LoginPage() {
     <>
       {/* Header thương hiệu "Gia đình nhỏ" */}
       <div className="text-center mb-6">
-        <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 text-white mb-3 shadow-lg shadow-purple-500/30 ring-4 ring-white/10 transform hover:scale-105 transition-transform">
-          <House className="w-7 h-7 sm:w-8 sm:h-8" />
-          <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-amber-300 animate-bounce" />
+        <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 text-white mb-3 shadow-lg shadow-purple-500/30 ring-4 ring-white/10 transform hover:scale-105 transition-transform p-2.5">
+          {/* Thay thế House bằng Logo của bạn */}
+          <Image 
+            src="/images/logo.png" 
+            alt="Logo gia đình" 
+            fill 
+            className="object-contain p-2" 
+          />
+          <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-amber-300 animate-bounce z-10" />
         </div>
 
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300 bg-clip-text text-transparent">
