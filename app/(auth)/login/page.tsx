@@ -13,7 +13,6 @@ import {
   ArrowRight,
   Loader2,
   ShieldCheck,
-  House,
   Sparkles,
   Heart,
 } from 'lucide-react';
@@ -25,7 +24,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  
   const [loading, setLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  const isFormDisabled = loading || isGoogleLoading;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,16 +62,28 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
+    setIsGoogleLoading(true);
     const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     window.location.href = `${backendUrl}/auth/google`;
   };
 
   return (
-    <>
+    <div className="relative w-full">
+      {/* POPUP LOADING GOOGLE VỪA VẶN BÊN TRONG FORM */}
+      {isGoogleLoading && (
+        <div className="absolute -inset-5 sm:-inset-8 z-50 flex items-center justify-center rounded-3xl bg-slate-950/70 backdrop-blur-md border border-white/20 shadow-2xl animate-fadeIn">
+          <div className="flex flex-col items-center gap-4 bg-white/5 p-6 rounded-3xl border border-white/10">
+            <Loader2 className="w-10 h-10 animate-spin text-purple-400" />
+            <p className="text-sm font-bold text-white tracking-wide">
+              Đang kết nối Google...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header thương hiệu "Gia đình nhỏ" */}
       <div className="text-center mb-6">
         <div className="relative inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 text-white mb-3 shadow-lg shadow-purple-500/30 ring-4 ring-white/10 transform hover:scale-105 transition-transform p-2.5">
-          {/* Thay thế House bằng Logo của bạn */}
           <Image 
             src="/images/logo.png" 
             alt="Logo gia đình" 
@@ -93,6 +108,7 @@ export default function LoginPage() {
         </div>
       )}
 
+      {/* FORM LOGIN TRUYỀN THỐNG */}
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-xs font-medium text-slate-200 mb-1.5">
@@ -105,10 +121,11 @@ export default function LoginPage() {
             <input
               type="email"
               required
+              disabled={isFormDisabled}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Nhập email của bạn..."
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950/50 border border-white/15 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60 focus:border-purple-400 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-950/50 border border-white/15 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60 focus:border-purple-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
         </div>
@@ -124,15 +141,17 @@ export default function LoginPage() {
             <input
               type={showPassword ? 'text' : 'password'}
               required
+              disabled={isFormDisabled}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Nhập mật khẩu của bạn..."
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-950/50 border border-white/15 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60 focus:border-purple-400 transition-all"
+              className="w-full pl-10 pr-10 py-2.5 bg-slate-950/50 border border-white/15 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/60 focus:border-purple-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               type="button"
+              disabled={isFormDisabled}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white transition-colors"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {showPassword ? (
                 <EyeOff className="w-4 h-4" />
@@ -148,13 +167,16 @@ export default function LoginPage() {
             <input
               type="checkbox"
               defaultChecked
-              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-500/40"
+              disabled={isFormDisabled}
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-600 focus:ring-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <span className="ml-2">Ghi nhớ đăng nhập</span>
           </label>
           <a
             href="#"
-            className="text-purple-300 hover:text-purple-200 transition-colors"
+            className={`text-purple-300 hover:text-purple-200 transition-colors ${
+              isFormDisabled ? 'pointer-events-none opacity-50' : ''
+            }`}
           >
             Quên mật khẩu?
           </a>
@@ -162,7 +184,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={isFormDisabled}
           className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed group mt-3 active:scale-[0.99]"
         >
           {loading ? (
@@ -182,54 +204,58 @@ export default function LoginPage() {
           <span>Chưa có tài khoản? </span>
           <Link
             href="/register"
-            className="font-bold text-purple-300 hover:text-purple-200 underline underline-offset-4 transition-colors"
+            className={`font-bold text-purple-300 hover:text-purple-200 underline underline-offset-4 transition-colors ${
+              isFormDisabled ? 'pointer-events-none opacity-50' : ''
+            }`}
           >
             Đăng ký ngay
           </Link>
         </div>
-
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10"></div>
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="px-3 bg-slate-900/90 text-slate-400 rounded-full">
-              hoặc
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="w-full py-2.5 px-4 bg-white text-slate-800 hover:bg-slate-100 font-medium text-sm rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-md active:scale-[0.99]"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
-          </svg>
-          <span>Đăng nhập với Google</span>
-        </button>
       </form>
+
+      {/* KHỐI ĐĂNG NHẬP GOOGLE */}
+      <div className="relative my-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-white/10"></div>
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="px-3 bg-slate-900/90 text-slate-400 rounded-full">
+            hoặc
+          </span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        disabled={isFormDisabled}
+        onClick={handleGoogleLogin}
+        className="w-full py-2.5 px-4 bg-white text-slate-800 hover:bg-slate-100 font-medium text-sm rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-md active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24">
+          <path
+            fill="#4285F4"
+            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+          />
+          <path
+            fill="#34A853"
+            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+          />
+          <path
+            fill="#EA4335"
+            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+          />
+        </svg>
+        <span>Đăng nhập với Google</span>
+      </button>
 
       <div className="mt-6 text-center flex items-center justify-center space-x-1.5 text-xs text-slate-300">
         <ShieldCheck className="w-4 h-4 text-emerald-400" />
         <span>Kết nối an toàn & bảo mật mã hóa JWT</span>
       </div>
-    </>
+    </div>
   );
 }
