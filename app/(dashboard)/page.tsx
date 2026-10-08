@@ -1,30 +1,24 @@
-"use client";
+'use client';
 
-import Goals from "@/components/dashboard/Goals";
-import HeroBanner from "@/components/ui/HeroBanner";
-import IncomeExpenseChart from "@/components/dashboard/IncomeExpenseChart";
-import MemberBudgets from "@/components/dashboard/MemberBudgets";
-import RecentTransactions from "@/components/dashboard/RecentTransactions";
-import SpendingBreakdown from "@/components/dashboard/SpendingBreakdown";
-import StatCards from "@/components/dashboard/StatCards";
-import { useEffect, useState } from "react";
-
+import { useEffect, useState } from 'react';
+import HeroBanner from '@/components/ui/HeroBanner';
+import StatCards from '@/components/dashboard/StatCards';
+import IncomeExpenseChart from '@/components/dashboard/IncomeExpenseChart';
+import CategoryBudgets from '@/components/dashboard/CategoryBudgets';
+import RecentTransactions from '@/components/dashboard/RecentTransactions';
+import SpendingBreakdown from '@/components/dashboard/SpendingBreakdown';
+import Goals from '@/components/dashboard/Goals';
 
 export default function DashboardPage() {
-  // Tên gia đình lấy từ thông tin người dùng
   const [familyName, setFamilyName] = useState<string>('Gia đình nhỏ');
 
-  // Lấy tên gia đình từ localStorage
   useEffect(() => {
     const savedUser = localStorage.getItem('user_info');
-    console.log(savedUser)
     if (savedUser) {
       try {
         const parsed = JSON.parse(savedUser);
         const name = parsed.family?.name || parsed.familyName;
-        if (name) {
-          setFamilyName(name);
-        }
+        if (name) setFamilyName(name);
       } catch (e) {
         console.error('Lỗi đọc user_info:', e);
       }
@@ -32,27 +26,30 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div>
-      <HeroBanner 
+    <div className="w-full space-y-5 pb-16 select-none">
+      <HeroBanner
         title={`${familyName}!`}
         greeting="Xin chào"
         emoji="👋"
         bannerDay="/images/banner_home_day.png"
         bannerNight="/images/banner_home_night.png"
       />
- 
-      {/* Kéo toàn bộ nội dung lên đè vào đáy banner (phần ảnh đang tan) */}
+
       <div className="relative z-10 -mt-16 space-y-5 lg:-mt-10">
+        {/* Component tự gọi API /dashboard/stats */}
         <StatCards />
- 
-        {/* Hàng giữa: biểu đồ (2/3) + ngân sách thành viên (1/3) */}
+
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <div className="xl:col-span-2"><IncomeExpenseChart /></div>
-          <MemberBudgets />
+          <div className="xl:col-span-2">
+            {/* Component tự gọi API /dashboard/chart */}
+            <IncomeExpenseChart />
+          </div>
+          {/* Component tự gọi API /dashboard/category-budgets */}
+          <CategoryBudgets />
         </div>
- 
-        {/* Hàng cuối: giao dịch + cơ cấu + mục tiêu */}
+
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+          {/* Từng Component tự gọi API tương ứng */}
           <RecentTransactions />
           <SpendingBreakdown />
           <Goals />
