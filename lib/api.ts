@@ -11,7 +11,7 @@ const api = axios.create({
 // Interceptor cho Request: Tự động gắn Token vào Header
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('accessToken');
+    const token = Cookies.get('accessToken') || localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

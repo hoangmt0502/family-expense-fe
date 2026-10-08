@@ -58,6 +58,11 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleLogin = () => {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+    window.location.href = `${backendUrl}/auth/google`;
+  };
+
   return (
     <>
       {/* Header thương hiệu "Gia đình nhỏ" */}
@@ -196,6 +201,7 @@ export default function LoginPage() {
 
         <button
           type="button"
+          onClick={handleGoogleLogin}
           className="w-full py-2.5 px-4 bg-white text-slate-800 hover:bg-slate-100 font-medium text-sm rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 shadow-md active:scale-[0.99]"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
