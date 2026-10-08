@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Card({
   className = '',
   children,
@@ -31,11 +33,11 @@ export function CardHeader({
 
 export function SeeAll({ href = '#' }: { href?: string }) {
   return (
-    <a
+    <Link
       href={href}
       className="text-xs font-semibold text-violet-600 hover:text-violet-500 dark:text-violet-300"
     >
       Xem tất cả →
-    </a>
+    </Link>
   );
 }

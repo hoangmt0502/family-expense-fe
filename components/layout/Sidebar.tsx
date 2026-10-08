@@ -13,6 +13,7 @@ import {
   Users,
   FolderTree,
   ChevronDown,
+  Target,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
@@ -38,11 +39,11 @@ interface NavSingleItem {
 
 type NavItem = NavSingleItem | NavGroupItem;
 
-// NAV tinh gọn chuẩn theo các Module Backend hiện có
 const NAV: NavItem[] = [
   { href: '/', label: 'Tổng quan', icon: House },
   { href: '/transactions', label: 'Thu chi', icon: ClipboardList },
   { href: '/budgets', label: 'Ngân sách', icon: CalendarCheck },
+  { href: '/goals', label: 'Mục tiêu tài chính', icon: Target }, // Bổ sung tại đây
   { href: '/family', label: 'Thành viên', icon: Users },
   { href: '/categories', label: 'Danh mục thu chi', icon: FolderTree },
   { href: '/settings', label: 'Cài đặt', icon: Settings },
