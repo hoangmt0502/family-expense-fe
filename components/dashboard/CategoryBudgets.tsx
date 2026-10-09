@@ -5,7 +5,7 @@ import Image from 'next/image';
 import api from '@/lib/api';
 import { Card, CardHeader, SeeAll } from '@/components/ui/Card';
 import { vnd } from '@/lib/format';
-import { LUCIDE_ICONS } from '@/app/(dashboard)/categories/page';
+import { LUCIDE_ICONS } from '../categories/CategoryFormModal';
 
 export default function CategoryBudgets() {
   const [budgets, setBudgets] = useState<any[]>([]);

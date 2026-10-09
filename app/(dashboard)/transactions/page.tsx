@@ -1,19 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import api from '@/lib/api';
 import HeroBanner from '@/components/ui/HeroBanner';
 import TransactionDetailModal from '@/components/transactions/TransactionDetailModal';
-import CameraCaptureModal from '@/components/ui/Cameracapturemodal';
 import Dropdown from '@/components/ui/Dropdown';
-import { LUCIDE_ICONS } from '../categories/page';
 
-// Date Picker Library & Locales
-import { DayPicker } from 'react-day-picker';
+// Nhúng Component Form mới tách
+import TransactionFormModal, { Transaction } from '@/components/transactions/TransactionFormModal';
+
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import 'react-day-picker/dist/style.css';
 
 import {
   Plus,
@@ -22,16 +20,13 @@ import {
   Loader2,
   X,
   AlertTriangle,
-  Upload,
   Wallet,
   Calendar as CalendarIcon,
   Filter,
-  ImageIcon,
   TrendingUp,
   TrendingDown,
-  Camera,
-  CalendarDays,
 } from 'lucide-react';
+import { LUCIDE_ICONS } from '@/components/categories/CategoryFormModal';
 
 interface Category {
   id: string;
@@ -39,23 +34,6 @@ interface Category {
   type: 'INCOME' | 'EXPENSE';
   icon?: string;
   imageUrl?: string;
-}
-
-interface User {
-  id: string;
-  fullName: string;
-  avatar?: string;
-}
-
-interface Transaction {
-  id: string;
-  amount: number;
-  type: 'INCOME' | 'EXPENSE';
-  note?: string;
-  date: string;
-  imageUrl?: string;
-  category: Category;
-  user: User;
 }
 
 interface Summary {
@@ -76,31 +54,13 @@ export default function TransactionsPage() {
   const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Form Modal State (Đã thay thế)
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
-  const [formData, setFormData] = useState({
-    amount: '',
-    type: 'EXPENSE' as 'INCOME' | 'EXPENSE',
-    categoryId: '',
-    note: '',
-    date: new Date(),
-    imageUrl: '',
-  });
 
   // Xem chi tiết & Phóng to ảnh
   const [viewingTx, setViewingTx] = useState<Transaction | null>(null);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
-
-  // Date Picker Overlay State
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-
-  // Camera
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const cameraFallbackRef = useRef<HTMLInputElement>(null);
-
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [submitLoading, setSubmitLoading] = useState(false);
 
   // Delete Modal
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string }>({
@@ -119,7 +79,6 @@ export default function TransactionsPage() {
 
       const res = await api.get(`/transactions?${params.toString()}`);
 
-      // Ép amount về number (API có thể trả chuỗi dạng "15000000" → toLocaleString không có tác dụng)
       setTransactions(
         res.data.data.map((t: Transaction) => ({ ...t, amount: Number(t.amount) })),
       );
@@ -152,91 +111,14 @@ export default function TransactionsPage() {
     fetchTransactions();
   }, [selectedMonth, selectedYear, selectedCategoryId]);
 
-  // Upload 1 file ảnh (dùng chung cho chọn file & chụp từ camera)
-  const uploadFile = async (file: File) => {
-    const bodyFormData = new FormData();
-    bodyFormData.append('file', file);
-
-    setUploadingImage(true);
-    try {
-      const res = await api.post('/upload/image', bodyFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setFormData((prev) => ({ ...prev, imageUrl: res.data.url }));
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Tải ảnh thất bại');
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) uploadFile(file);
-    e.target.value = ''; // cho phép chọn lại cùng 1 file
-  };
-
   const handleOpenCreateModal = () => {
     setEditingTx(null);
-    setFormData({
-      amount: '',
-      type: 'EXPENSE',
-      categoryId: categories.find((c) => c.type === 'EXPENSE')?.id || '',
-      note: '',
-      date: new Date(),
-      imageUrl: '',
-    });
-    setIsModalOpen(true);
+    setIsFormModalOpen(true);
   };
 
   const handleOpenEditModal = (tx: Transaction) => {
     setEditingTx(tx);
-    setFormData({
-      amount: tx.amount.toString(),
-      type: tx.type,
-      categoryId: tx.category.id,
-      note: tx.note || '',
-      date: tx.date ? new Date(tx.date) : new Date(),
-      imageUrl: tx.imageUrl || '',
-    });
-    setIsModalOpen(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ');
-      return;
-    }
-    if (!formData.categoryId) {
-      alert('Vui lòng chọn danh mục');
-      return;
-    }
-
-    setSubmitLoading(true);
-
-    const payload = {
-      amount: parseFloat(formData.amount),
-      type: formData.type,
-      categoryId: formData.categoryId,
-      note: formData.note.trim() || undefined,
-      date: formData.date ? formData.date.toISOString() : undefined,
-      imageUrl: formData.imageUrl.trim() || undefined,
-    };
-
-    try {
-      if (editingTx) {
-        await api.patch(`/transactions/${editingTx.id}`, payload);
-      } else {
-        await api.post('/transactions', payload);
-      }
-      setIsModalOpen(false);
-      fetchTransactions();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Thao tác thất bại');
-    } finally {
-      setSubmitLoading(false);
-    }
+    setIsFormModalOpen(true);
   };
 
   const handleDelete = async () => {
@@ -246,15 +128,13 @@ export default function TransactionsPage() {
       await api.delete(`/transactions/${deleteModal.id}`);
       setDeleteModal({ isOpen: false, id: '' });
       fetchTransactions();
-      if (viewingTx?.id === deleteModal.id) setViewingTx(null); // Đóng modal chi tiết nếu đang mở giao dịch vừa xóa
+      if (viewingTx?.id === deleteModal.id) setViewingTx(null);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Xóa giao dịch thất bại');
     } finally {
       setDeleteLoading(false);
     }
   };
-
-  const filteredCategoriesForForm = categories.filter((c) => c.type === formData.type);
 
   return (
     <div className="w-full space-y-5 pb-16 select-none">
@@ -281,23 +161,14 @@ export default function TransactionsPage() {
 
       {/* 2. 4 THẺ STAT CARDS */}
       <div className="-mt-10 sm:-mt-14 relative z-20 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-        {/* Card 1: Tổng Thu Nhập */}
         <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-md shadow-slate-200/40 dark:shadow-none">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-1.5 border border-emerald-100 dark:border-emerald-800/40 grid place-items-center">
-              <Image
-                src="/images/icon_wallet_3d.png"
-                alt="Thu nhập"
-                width={36}
-                height={36}
-                className="object-contain"
-              />
+              <Image src="/images/icon_wallet_3d.png" alt="Thu nhập" width={36} height={36} className="object-contain" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate">
-                  Tổng thu nhập
-                </span>
+                <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate">Tổng thu nhập</span>
                 <TrendingUp className="h-3 w-3 text-emerald-500 shrink-0" />
               </div>
               <p className="text-xs sm:text-base font-black text-emerald-600 dark:text-emerald-400 truncate mt-0.5">
@@ -307,23 +178,14 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* Card 2: Tổng Chi Tiêu */}
         <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-md shadow-slate-200/40 dark:shadow-none">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-xl sm:rounded-2xl bg-rose-50 dark:bg-rose-950/40 p-1.5 border border-rose-100 dark:border-rose-800/40 grid place-items-center">
-              <Image
-                src="/images/icon_bag_3d.png"
-                alt="Chi tiêu"
-                width={36}
-                height={36}
-                className="object-contain"
-              />
+              <Image src="/images/icon_bag_3d.png" alt="Chi tiêu" width={36} height={36} className="object-contain" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate">
-                  Tổng chi tiêu
-                </span>
+                <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate">Tổng chi tiêu</span>
                 <TrendingDown className="h-3 w-3 text-rose-500 shrink-0" />
               </div>
               <p className="text-xs sm:text-base font-black text-rose-600 dark:text-rose-400 truncate mt-0.5">
@@ -333,51 +195,27 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        {/* Card 3: Số Dư Tích Lũy */}
         <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-md shadow-slate-200/40 dark:shadow-none">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-xl sm:rounded-2xl bg-purple-50 dark:bg-purple-950/40 p-1.5 border border-purple-100 dark:border-purple-800/40 grid place-items-center">
-              <Image
-                src="/images/icon_piggy_3d.png"
-                alt="Số dư"
-                width={36}
-                height={36}
-                className="object-contain"
-              />
+              <Image src="/images/icon_piggy_3d.png" alt="Số dư" width={36} height={36} className="object-contain" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate block">
-                Số dư tích lũy
-              </span>
-              <p
-                className={`text-xs sm:text-base font-black truncate mt-0.5 ${
-                  summary.balance >= 0
-                    ? 'text-purple-600 dark:text-purple-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}
-              >
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate block">Số dư tích lũy</span>
+              <p className={`text-xs sm:text-base font-black truncate mt-0.5 ${summary.balance >= 0 ? 'text-purple-600 dark:text-purple-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 {summary.balance.toLocaleString('vi-VN')} đ
               </p>
             </div>
           </div>
         </div>
 
-        {/* Card 4: Giao Dịch Đã Phát Sinh */}
         <div className="p-3 sm:p-4 rounded-2xl sm:rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-100 dark:border-slate-800 shadow-md shadow-slate-200/40 dark:shadow-none">
           <div className="flex items-center gap-2.5 sm:gap-3.5">
             <div className="relative h-10 w-10 sm:h-12 sm:w-12 shrink-0 rounded-xl sm:rounded-2xl bg-amber-50 dark:bg-amber-950/40 p-1.5 border border-amber-100 dark:border-amber-800/40 grid place-items-center">
-              <Image
-                src="/images/icon_target_3d.png"
-                alt="Giao dịch"
-                width={36}
-                height={36}
-                className="object-contain"
-              />
+              <Image src="/images/icon_target_3d.png" alt="Giao dịch" width={36} height={36} className="object-contain" />
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate block">
-                Đã phát sinh
-              </span>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight truncate block">Đã phát sinh</span>
               <p className="text-xs sm:text-base font-black text-slate-900 dark:text-white truncate mt-0.5">
                 {transactions.length} khoản
               </p>
@@ -389,7 +227,6 @@ export default function TransactionsPage() {
       {/* 3. BỘ LỌC TẬP TRUNG */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
         <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3">
-          {/* Lọc Tháng */}
           <Dropdown
             className="sm:w-28"
             title="Chọn tháng"
@@ -403,7 +240,6 @@ export default function TransactionsPage() {
             }))}
           />
 
-          {/* Lọc Năm */}
           <Dropdown
             className="sm:w-24"
             title="Chọn năm"
@@ -412,7 +248,6 @@ export default function TransactionsPage() {
             options={[2025, 2026, 2027].map((y) => ({ value: String(y), label: String(y) }))}
           />
 
-          {/* Lọc Danh mục */}
           <Dropdown
             className="sm:w-48"
             title="Lọc theo danh mục"
@@ -503,7 +338,7 @@ export default function TransactionsPage() {
                           </span>
                         </td>
                         <td className="p-4 py-3 text-[13px] font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                          {tx.user.fullName}
+                          {tx.user?.fullName}
                         </td>
                         <td className="p-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -572,7 +407,7 @@ export default function TransactionsPage() {
                         )}
                       </div>
                       <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate">
-                        {format(new Date(tx.date), 'dd/MM/yyyy')} • {tx.user.fullName}
+                        {format(new Date(tx.date), 'dd/MM/yyyy')} • {tx.user?.fullName}
                       </p>
                     </div>
                   </div>
@@ -626,7 +461,15 @@ export default function TransactionsPage() {
         />
       )}
 
-      {/* MODAL 6: PHÓNG TO ẢNH (LIGHTBOX) */}
+      {/* COMPONENT FORM TÁCH RỜI */}
+      <TransactionFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={fetchTransactions}
+        transaction={editingTx}
+      />
+
+      {/* MODAL 6: PHÓNG TO ẢNH (LIGHTBOX) KHI XEM CHI TIẾT */}
       {zoomedImage && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 cursor-zoom-out animate-fadeIn"
@@ -643,254 +486,6 @@ export default function TransactionsPage() {
             alt="Zoomed"
             className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl scale-100 animate-in zoom-in-95 duration-200"
           />
-        </div>
-      )}
-
-      {/* MODAL 7: THÊM / SỬA GIAO DỊCH */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white mb-5">
-              {editingTx ? 'Chỉnh sửa giao dịch' : 'Tạo giao dịch mới'}
-            </h3>
-
-            <form onSubmit={handleSubmit} className="space-y-4 relative">
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const defaultCat = categories.find((c) => c.type === 'EXPENSE')?.id || '';
-                    setFormData({ ...formData, type: 'EXPENSE', categoryId: defaultCat });
-                  }}
-                  className={`py-2.5 rounded-2xl text-xs font-bold transition-all border ${
-                    formData.type === 'EXPENSE'
-                      ? 'border-rose-300 bg-rose-50 text-rose-600 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400'
-                      : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400'
-                  }`}
-                >
-                  Khoản chi
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const defaultCat = categories.find((c) => c.type === 'INCOME')?.id || '';
-                    setFormData({ ...formData, type: 'INCOME', categoryId: defaultCat });
-                  }}
-                  className={`py-2.5 rounded-2xl text-xs font-bold transition-all border ${
-                    formData.type === 'INCOME'
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400'
-                      : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400'
-                  }`}
-                >
-                  Thu nhập
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wider">
-                  Số tiền (VNĐ) <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  placeholder="Ví dụ: 50000"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-800/50 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wider">
-                  Danh mục <span className="text-rose-500">*</span>
-                </label>
-                <Dropdown
-                  variant="field"
-                  title="Chọn danh mục"
-                  placeholder="-- Chọn danh mục --"
-                  value={formData.categoryId}
-                  onChange={(v) => setFormData({ ...formData, categoryId: v })}
-                  options={filteredCategoriesForForm.map((c) => ({ value: c.id, label: c.name }))}
-                />
-              </div>
-
-              {/* DATE PICKER */}
-              <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wider">
-                  Ngày giao dịch
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsDatePickerOpen(true)}
-                  className="w-full flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-900 focus:border-purple-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-white transition-all"
-                >
-                  <span className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    {format(formData.date, 'EEEE, dd/MM/yyyy', { locale: vi })}
-                  </span>
-                  <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/40 px-2 py-0.5 rounded-lg">
-                    Đổi ngày
-                  </span>
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wider">
-                  Ghi chú
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ví dụ: Cơm trưa, Xăng xe..."
-                  value={formData.note}
-                  onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-800/50 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1 uppercase tracking-wider">
-                  Ảnh hóa đơn / Chứng từ
-                </label>
-                <div className="flex flex-col gap-2.5">
-                  <div className="flex items-center gap-2">
-                    <label className="flex-1 flex items-center justify-center gap-1.5 cursor-pointer rounded-2xl border border-dashed border-purple-300 bg-purple-50/50 hover:bg-purple-100/50 px-3 py-2.5 text-xs font-bold text-purple-600 transition-all dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-300">
-                      {uploadingImage ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                      ) : (
-                        <Upload className="h-4 w-4" />
-                      )}
-                      <span>Tải ảnh từ máy</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        disabled={uploadingImage}
-                      />
-                    </label>
-
-                    {/* Chụp ảnh mới: mở camera trực tiếp (getUserMedia) */}
-                    <button
-                      type="button"
-                      disabled={uploadingImage}
-                      onClick={() => setIsCameraOpen(true)}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-pink-300 bg-pink-50/50 hover:bg-pink-100/50 px-3 py-2.5 text-xs font-bold text-pink-600 transition-all dark:border-pink-500/30 dark:bg-pink-500/10 dark:text-pink-300 disabled:opacity-60"
-                    >
-                      <Camera className="h-4 w-4" />
-                      <span>Chụp ảnh mới</span>
-                    </button>
-
-                    {/* Dự phòng: mở app máy ảnh của thiết bị khi trình duyệt không cho dùng camera */}
-                    <input
-                      ref={cameraFallbackRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder="Hoặc dán link ảnh..."
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:border-purple-500 focus:bg-white focus:outline-none dark:border-slate-800 dark:bg-slate-800/50 dark:text-white"
-                    />
-
-                    {formData.imageUrl ? (
-                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer" onClick={() => setZoomedImage(formData.imageUrl!)}>
-                        <Image
-                          src={formData.imageUrl}
-                          alt="Preview"
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-10 w-10 shrink-0 grid place-items-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700">
-                        <ImageIcon className="h-4 w-4" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="w-1/2 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 font-bold text-xs transition-all"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitLoading || uploadingImage}
-                  className="w-1/2 py-3 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-lg shadow-purple-600/30 flex items-center justify-center gap-2 transition-all active:scale-95"
-                >
-                  {submitLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <span>{editingTx ? 'Cập nhật' : 'Tạo mới'}</span>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* POPOVER DATE PICKER (FIXED) - Nổi phía trên Modal Form */}
-      {isDatePickerOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fadeIn"
-          onClick={() => setIsDatePickerOpen(false)}
-        >
-          <div
-            className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl scale-100 animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <DayPicker
-              mode="single"
-              selected={formData.date}
-              onSelect={(selectedDate) => {
-                if (selectedDate) {
-                  setFormData({ ...formData, date: selectedDate });
-                  setIsDatePickerOpen(false);
-                }
-              }}
-              locale={vi}
-              className="p-2"
-              classNames={{
-                months: 'flex flex-col relative',
-                month_caption: 'flex justify-between items-center mb-4 h-8',
-                caption_label: 'font-extrabold text-sm text-slate-900 dark:text-white px-2',
-                nav: 'flex items-center gap-1 absolute right-0 top-0',
-                button_previous: 'h-8 w-8 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors',
-                button_next: 'h-8 w-8 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 transition-colors',
-                month_grid: 'w-full border-collapse',
-                weekdays: 'flex mb-2',
-                weekday: 'w-10 text-slate-400 font-bold text-[11px] uppercase tracking-wider text-center',
-                week: 'flex mt-1',
-                day: 'h-10 w-10 flex items-center justify-center rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-all cursor-pointer',
-                selected: 'bg-purple-600 !text-white hover:bg-purple-700 shadow-md shadow-purple-500/30',
-                today: 'text-purple-600 dark:text-purple-400 font-black border-2 border-purple-200 dark:border-purple-800',
-                outside: 'text-slate-300 dark:text-slate-600 opacity-50 cursor-default pointer-events-none hover:bg-transparent',
-              }}
-            />
-          </div>
         </div>
       )}
 
@@ -923,15 +518,6 @@ export default function TransactionsPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* 9. CAMERA CHỤP ẢNH CHỨNG TỪ (nổi trên mọi modal) */}
-      {isCameraOpen && (
-        <CameraCaptureModal
-          onClose={() => setIsCameraOpen(false)}
-          onCapture={uploadFile}
-          onFallback={() => cameraFallbackRef.current?.click()}
-        />
       )}
     </div>
   );

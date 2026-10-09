@@ -225,10 +225,9 @@ export default function SettingsPage() {
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-3xl bg-gradient-to-tr from-purple-500 to-pink-500 text-white font-black text-2xl grid place-items-center shadow-md border-2 border-white dark:border-slate-800">
                   {profile.avatar ? (
-                    <Image
+                    <img
                       src={profile.avatar}
                       alt={profile.fullName}
-                      fill
                       className="object-cover"
                     />
                   ) : (

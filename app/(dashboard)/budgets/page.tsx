@@ -4,8 +4,7 @@ import { useState, useEffect, ComponentType } from 'react';
 import Image from 'next/image';
 import api from '@/lib/api';
 import HeroBanner from '@/components/ui/HeroBanner';
-import Dropdown, { DropdownOption } from '@/components/ui/Dropdown'; // Hoặc đường dẫn phù hợp tới component Dropdown của bạn
-import { LUCIDE_ICONS } from '../categories/page';
+import Dropdown, { DropdownOption } from '@/components/ui/Dropdown';
 
 import {
   Plus,
@@ -23,6 +22,7 @@ import {
   TriangleAlert,
 } from 'lucide-react';
 import { formatMoney } from '@/lib/format';
+import { LUCIDE_ICONS } from '@/components/categories/CategoryFormModal';
 
 interface Category {
   id: string;
@@ -565,7 +565,7 @@ function BudgetCard({ budget, icons, onEdit, onDelete }: Props) {
           className={`relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br text-white shadow-md ${t.tile} ${t.shadow}`}
         >
           {cat.imageUrl ? (
-            <Image src={cat.imageUrl} alt={cat.name} fill sizes="48px" className="object-cover" />
+            <img src={cat.imageUrl} alt={cat.name} className="object-cover" />
           ) : Lucide ? (
             <Lucide className="h-6 w-6" />
           ) : iconIsWord ? (
